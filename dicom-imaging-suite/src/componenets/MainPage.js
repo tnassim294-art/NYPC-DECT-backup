@@ -35,7 +35,7 @@ const MainPage = () => {
   const [sprMapUrls, setSprMapUrls] = useState([]);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:5051/get-supported-models")
+    fetch("http://127.0.0.1:5050/get-supported-models")
       .then((response) => response.json())
       .then((data) => {
         const modelOptions = Object.entries(data).map(([key, value]) => ({
