@@ -4,6 +4,7 @@ import styled from "styled-components";
 
 const ResultsTable = ({ results, selectedModel }) => {
   if (selectedModel === "Tanaka" || selectedModel === "Saito") {
+    const isSaito = selectedModel === "Saito";
     return (
       <TableWrapper>
         <TableTitle>{selectedModel} Results</TableTitle>
@@ -19,6 +20,7 @@ const ResultsTable = ({ results, selectedModel }) => {
                 Z<sub>eff</sub>
               </TableHeader>
               <TableHeader>Stopping Power Ratio</TableHeader>
+              {isSaito && <TableHeader>Relative Error (%)</TableHeader>}
             </tr>
           </thead>
           <tbody>
@@ -29,6 +31,11 @@ const ResultsTable = ({ results, selectedModel }) => {
                 <TableCell>{result.rho_e}</TableCell>
                 <TableCell>{result.z_eff}</TableCell>
                 <TableCell>{result.stopping_power}</TableCell>
+                {isSaito && (
+                  <TableCell>
+                    {result.relative_error !== undefined ? result.relative_error : "N/A"}
+                  </TableCell>
+                )}
               </tr>
             ))}
           </tbody>
@@ -70,6 +77,7 @@ const ResultsTable = ({ results, selectedModel }) => {
               <TableHeader>
                 Z<sub>eff</sub> R<sup>2</sup>
               </TableHeader>
+              {isSaito && <TableHeader>SPR RMSE</TableHeader>}
             </tr>
           </thead>
           <tbody>
@@ -78,6 +86,7 @@ const ResultsTable = ({ results, selectedModel }) => {
               <TableCell>{results.z_rmse}</TableCell>
               <TableCell>{results.rho_r2}</TableCell>
               <TableCell>{results.z_r2}</TableCell>
+              {isSaito && <TableCell>{results.spr_rmse ?? "N/A"}</TableCell>}
             </tr>
           </tbody>
         </ParametersTable>

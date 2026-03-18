@@ -163,6 +163,9 @@ const LoadingPage = () => {
 
       console.log("Analysis Result:", analysisResult);
 
+      // Store reference SPR values if available
+      const referenceSprValues = analysisResult.reference_spr_values || {};
+
       // Process results properly
       if (selectedModel == "Tanaka") {
         const processedResults = analysisResult.results.materials.map(
@@ -191,6 +194,8 @@ const LoadingPage = () => {
         processedResults["a"] = analysisResult.results.a.toFixed(5) || "NA";
         processedResults["b"] = analysisResult.results.b.toFixed(5) || "NA";
         processedResults["r"] = analysisResult.results.r.toFixed(3) || "NA";
+        processedResults["c0"] = analysisResult.results.c0?.toFixed(5) || "NA";
+        processedResults["c1"] = analysisResult.results.c1?.toFixed(5) || "NA";
         processedResults["rho_rmse"] =
           analysisResult.results.error_metrics.rho.RMSE.toFixed(5) || "NA";
         processedResults["z_rmse"] =
@@ -199,6 +204,8 @@ const LoadingPage = () => {
           analysisResult.results.error_metrics.rho.R2.toFixed(5) || "NA";
         processedResults["z_r2"] =
           analysisResult.results.error_metrics.z.R2.toFixed(5) || "NA";
+        processedResults["reference_spr_values"] = referenceSprValues;
+        processedResults["error_metrics"] = analysisResult.results.error_metrics;
 
         setResults(processedResults);
       } else if (selectedModel == "Hunemohr") {
@@ -233,6 +240,10 @@ const LoadingPage = () => {
         processedResults["percent_z"] =
           analysisResult.results.error_metrics.z.PercentError.toFixed(5) ||
           "NA";
+        processedResults["c"] = analysisResult.results.c?.toFixed(5) || "NA";
+        processedResults["d_e"] = analysisResult.results.d_e?.toFixed(5) || "NA";
+        processedResults["reference_spr_values"] = referenceSprValues;
+        processedResults["error_metrics"] = analysisResult.results.error_metrics;
         setResults(processedResults);
       } else if (selectedModel == "Saito") {
         const processedResults = analysisResult.results.materials.map(
@@ -264,6 +275,8 @@ const LoadingPage = () => {
           analysisResult.results.error_metrics.rho.R2.toFixed(5) || "NA";
         processedResults["z_r2"] =
           analysisResult.results.error_metrics.z.R2.toFixed(5) || "NA";
+        processedResults["reference_spr_values"] = referenceSprValues;
+        processedResults["error_metrics"] = analysisResult.results.error_metrics;
 
         setResults(processedResults);
       }

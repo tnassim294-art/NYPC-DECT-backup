@@ -11,6 +11,9 @@ const UploadSection = ({
   setShowHelp,
   showHelp,
   setIsTestMode,
+  setIsEnergyPairMode,
+  setIsScanTestMode,
+  setIsPhantomRobustnessMode,
 }) => {
   return (
     <>
@@ -33,6 +36,15 @@ const UploadSection = ({
         <TestButton onClick={() => setIsTestMode(true)}>
           Test Calibration
         </TestButton>
+        <EnergyPairButton onClick={() => setIsEnergyPairMode(true)}>
+          Energy Pair Analysis
+        </EnergyPairButton>
+        <ScanTestButton onClick={() => setIsScanTestMode(true)}>
+          Test with Scan
+        </ScanTestButton>
+        <RobustnessButton onClick={() => setIsPhantomRobustnessMode(true)}>
+          Phantom Size Robustness
+        </RobustnessButton>
       </ButtonGroup>
       <input
         type="file"
@@ -114,6 +126,33 @@ const TestButton = styled(UploadButton)`
 
   &:hover {
     box-shadow: 0px 12px 20px rgba(255, 179, 71, 0.6);
+  }
+`;
+
+const EnergyPairButton = styled(UploadButton)`
+  background: #4ecdc4;
+  box-shadow: 0px 8px 15px rgba(78, 205, 196, 0.4);
+
+  &:hover {
+    box-shadow: 0px 12px 20px rgba(78, 205, 196, 0.6);
+  }
+`;
+
+const ScanTestButton = styled(UploadButton)`
+  background: #7b68ee;
+  box-shadow: 0px 8px 15px rgba(123, 104, 238, 0.4);
+
+  &:hover {
+    box-shadow: 0px 12px 20px rgba(123, 104, 238, 0.6);
+  }
+`;
+
+const RobustnessButton = styled(UploadButton)`
+  background: #2ecc71;
+  box-shadow: 0px 8px 15px rgba(46, 204, 113, 0.4);
+
+  &:hover {
+    box-shadow: 0px 12px 20px rgba(46, 204, 113, 0.6);
   }
 `;
 

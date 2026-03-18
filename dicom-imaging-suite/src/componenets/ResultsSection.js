@@ -49,14 +49,14 @@ const ResultsSection = ({
         gamma: results.gamma,
       }),
       ...(selectedModel === "Hunemohr" && {
-        a: results.a,
-        b: results.b,
         c: results.c,
+        d_e: results.d_e,
       }),
       rho_rmse: results.error_metrics?.rho?.RMSE || "N/A",
       z_rmse: results.error_metrics?.z?.RMSE || "N/A",
       rho_r2: results.error_metrics?.rho?.R2 || "N/A",
       z_r2: results.error_metrics?.z?.R2 || "N/A",
+      reference_spr_values: results.reference_spr_values || {},
     };
 
     const jsonContent = JSON.stringify(calibrationData, null, 2);

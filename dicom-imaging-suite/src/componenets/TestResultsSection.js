@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import TestResultsTable from "./TestResultsTable";
+import CalibrationCurvePlot from "./CalibrationCurvePlot";
 import { FaHome } from "react-icons/fa";
 
 const TestResultsSection = ({
@@ -10,6 +11,10 @@ const TestResultsSection = ({
   handleHome,
   downloadResultsAsCSV,
   sprMapUrls,
+  onErrorSweep,
+  rmse,
+  calCurve,
+  sprParams,
 }) => {
   const [currentSlice, setCurrentSlice] = useState(0);
 
@@ -30,6 +35,11 @@ const TestResultsSection = ({
         </UtilityButton>
         <UtilityButton onClick={downloadResultsAsCSV}>💾</UtilityButton>
       </ButtonGroup>
+      {onErrorSweep && (
+        <ErrorSweepButton onClick={onErrorSweep}>
+          Error Sweep
+        </ErrorSweepButton>
+      )}
 
       {sprMapUrls && sprMapUrls.length > 0 && (
         <SprCard>
@@ -63,7 +73,13 @@ const TestResultsSection = ({
         </SprCard>
       )}
 
-      <TestResultsTable results={results} selectedModel={selectedModel} />
+      {(calCurve || sprParams) && selectedModel === "Schneider" && (
+        <CalibrationCurvePlot calCurve={calCurve} sprParams={sprParams} />
+      )}
+      {rmse != null && (
+        <RmseBox>RMSE: {rmse}</RmseBox>
+      )}
+      <TestResultsTable results={results} selectedModel={selectedModel} rmse={rmse} />
     </ResultsContainer>
   );
 };
@@ -101,6 +117,33 @@ const UtilityButton = styled.button`
   &:hover {
     background: #e0e0e0;
     transform: scale(1.1);
+  }
+`;
+
+const RmseBox = styled.div`
+  background: rgba(255, 107, 203, 0.15);
+  border: 1px solid #ff6bcb;
+  border-radius: 10px;
+  padding: 10px 24px;
+  color: #ff6bcb;
+  font-size: 16px;
+  font-weight: 600;
+`;
+
+const ErrorSweepButton = styled.button`
+  background: #6bbaff;
+  color: white;
+  padding: 12px 24px;
+  font-size: 15px;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0px 8px 15px rgba(107, 154, 255, 0.4);
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0px 12px 20px rgba(107, 154, 255, 0.6);
   }
 `;
 

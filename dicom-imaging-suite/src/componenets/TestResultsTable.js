@@ -17,6 +17,7 @@ const TestResultsTable = ({ results, selectedModel }) => {
             <tr>
               <TableHeader>Insert #</TableHeader>
               <TableHeader>Material</TableHeader>
+              <TableHeader>Mean HU</TableHeader>
               <TableHeader>
                 ρ<sub>e</sub>
               </TableHeader>
@@ -24,6 +25,7 @@ const TestResultsTable = ({ results, selectedModel }) => {
                 Z<sub>eff</sub>
               </TableHeader>
               <TableHeader>Stopping Power Ratio</TableHeader>
+              <TableHeader>Relative Error (%)</TableHeader>
             </tr>
           </thead>
           <tbody>
@@ -31,9 +33,11 @@ const TestResultsTable = ({ results, selectedModel }) => {
               <tr key={index}>
                 <TableCell>{index + 1}</TableCell>
                 <TableCell>{result.material}</TableCell>
+                <TableCell>{result.mean_hu}</TableCell>
                 <TableCell>{result.rho_e}</TableCell>
                 <TableCell>{result.z_eff}</TableCell>
                 <TableCell>{result.stopping_power}</TableCell>
+                <TableCell>{result.relative_error !== undefined ? result.relative_error : "N/A"}</TableCell>
               </tr>
             ))}
           </tbody>

@@ -4,6 +4,30 @@ import styled from "styled-components";
 import ImageViewer from "./ImageViewer";
 import { FaHome } from "react-icons/fa";
 
+const MATERIALS = [
+  "Cortical Bone",
+  "Inner Bone",
+  "50% CaCO3",
+  "30% CaCO3",
+  "Liver",
+  "Brain",
+  "Breast",
+  "Adipose",
+  "LN-450",
+  "LN-350",
+  "Solid Water",
+];
+
+const PHANTOM_OPTIONS = [
+  { value: "head", label: "Head" },
+  { value: "body", label: "Body" },
+  { value: "3d-head 0-ring", label: "3D-Head 0-Ring" },
+  { value: "3d-head 1-ring", label: "3D-Head 1-Ring" },
+  { value: "3d-head 2-ring", label: "3D-Head 2-Ring" },
+  { value: "3d-head 3-ring", label: "3D-Head 3-Ring" },
+  { value: "3d-head 4-ring", label: "3D-Head 4-Ring" },
+];
+
 const ViewerSection = ({
   highImages,
   lowImages,
@@ -13,6 +37,8 @@ const ViewerSection = ({
   cleanNoise,
   phantomType,
   setPhantomType,
+  testPhantomType = null,
+  setTestPhantomType = null,
   circleRadius,
   handleRadiusChange,
   selectedModel,
@@ -20,14 +46,38 @@ const ViewerSection = ({
   models,
   handleCalculate,
   handleHome,
+  // Circle placement props
+  circleMode,
+  setCircleMode,
+  customCircles,
+  isPlacingCircle,
+  setIsPlacingCircle,
+  selectedMaterial,
+  setSelectedMaterial,
+  selectedCircleId,
+  setSelectedCircleId,
+  onImageClick,
+  onRemoveCircle,
+  onClearCircles,
+  isSECT,
+  isTestViewer = false,
+  isEnergyPairViewer = false,
+  energyList = [],
+  onCalibrationSweep,
 }) => {
+  const getTitle = () => {
+    if (isEnergyPairViewer) return `Energy Pair Analysis (${energyList.join(", ")} kVp)`;
+    if (isTestViewer) return "Test Scan - Adjust ROIs";
+    return "Scan Visualizer";
+  };
+
   return (
     <>
       <Header>
         <UtilityButton onClick={handleHome}>
           <FaHome />
         </UtilityButton>
-        <h1>Scan Visualizer</h1>
+        <h1>{getTitle()}</h1>
       </Header>
       <ImageViewer
         highImages={highImages}
@@ -35,41 +85,137 @@ const ViewerSection = ({
         currentIndex={currentIndex}
         handleNextImage={handleNextImage}
         handlePreviousImage={handlePreviousImage}
+        customCircles={customCircles}
+        circleMode={circleMode}
+        isPlacingCircle={isPlacingCircle}
+        onImageClick={onImageClick}
+        selectedCircleId={selectedCircleId}
+        onCircleSelect={setSelectedCircleId}
       />
-      <ButtonGroup>
-        <SecondaryButton onClick={cleanNoise}>Clean Noise ✨</SecondaryButton>
-      </ButtonGroup>
+      {!isTestViewer && !isEnergyPairViewer && (
+        <ButtonGroup>
+          <SecondaryButton onClick={cleanNoise}>Clean Noise</SecondaryButton>
+        </ButtonGroup>
+      )}
       <ControlsContainer>
         <ControlGroup>
-          <SelectContainer>
-            <label>Phantom Size:</label>
-            <Select
-              value={phantomType}
-              onChange={(e) => setPhantomType(e.target.value)}
-            >
-              <option value="head">Head</option>
-              <option value="body">Body</option>
-              <option value="3d-head 0-ring">3D-Head 0-Ring</option>
-              <option value="3d-head 1-ring">3D-Head 1-Ring</option>
-              <option value="3d-head 2-ring">3D-Head 2-Ring</option>
-              <option value="3d-head 3-ring">3D-Head 3-Ring</option>
-              <option value="3d-head 4-ring">3D-Head 4-Ring</option>
-            </Select>
-          </SelectContainer>
-          <SelectContainer>
-            <label>Model Selection:</label>
-            <Select
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
-            >
-              {models.map((model) => (
-                <option key={model.name} value={model.name}>
-                  {model.name}
-                </option>
-              ))}
-            </Select>
-          </SelectContainer>
+          {!isTestViewer && !isEnergyPairViewer && (
+            <SelectContainer>
+              <label>Circle Mode:</label>
+              <Select
+                value={circleMode}
+                onChange={(e) => {
+                  setCircleMode(e.target.value);
+                  if (e.target.value === "preset") {
+                    setIsPlacingCircle(false);
+                  }
+                }}
+              >
+                <option value="preset">Preset</option>
+                <option value="custom">Custom</option>
+              </Select>
+            </SelectContainer>
+          )}
+          {circleMode === "preset" && !isTestViewer && !isEnergyPairViewer && (
+            <SelectContainer>
+              <label>Phantom Size:</label>
+              <Select
+                value={phantomType}
+                onChange={(e) => setPhantomType(e.target.value)}
+              >
+                {PHANTOM_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </Select>
+            </SelectContainer>
+          )}
+          {!isTestViewer && !isEnergyPairViewer && (
+            <SelectContainer>
+              <label>Model Selection:</label>
+              <Select
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+              >
+                {models.map((model) => (
+                  <option key={model.name} value={model.name}>
+                    {model.name}
+                  </option>
+                ))}
+              </Select>
+            </SelectContainer>
+          )}
+          {(isTestViewer || isEnergyPairViewer) && (
+            <SelectContainer>
+              <label>Model: {selectedModel}</label>
+            </SelectContainer>
+          )}
         </ControlGroup>
+
+        {circleMode === "custom" && (
+          <CircleControlsPanel>
+            <ControlGroup>
+              <SelectContainer>
+                <label>Material:</label>
+                <Select
+                  value={selectedMaterial}
+                  onChange={(e) => setSelectedMaterial(e.target.value)}
+                >
+                  {MATERIALS.map((mat) => (
+                    <option key={mat} value={mat}>
+                      {mat}
+                    </option>
+                  ))}
+                </Select>
+              </SelectContainer>
+              <PlaceButton
+                $active={isPlacingCircle}
+                onClick={() => setIsPlacingCircle(!isPlacingCircle)}
+              >
+                {isPlacingCircle ? "Stop Placing" : "Start Placing"}
+              </PlaceButton>
+            </ControlGroup>
+            <ControlGroup>
+              <SmallButton
+                onClick={() => {
+                  if (selectedCircleId != null) onRemoveCircle(selectedCircleId);
+                }}
+                disabled={selectedCircleId == null}
+              >
+                Remove Selected
+              </SmallButton>
+              <SmallButton
+                onClick={onClearCircles}
+                disabled={customCircles.length === 0}
+              >
+                Clear All
+              </SmallButton>
+            </ControlGroup>
+            {customCircles.length > 0 && (
+              <CircleList>
+                {customCircles.map((c) => (
+                  <CircleItem
+                    key={c.id}
+                    $selected={c.id === selectedCircleId}
+                    onClick={() => setSelectedCircleId(c.id)}
+                  >
+                    <span>
+                      {c.material} ({c.x}, {c.y}) r={c.radius}
+                    </span>
+                    <RemoveBtn
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRemoveCircle(c.id);
+                      }}
+                    >
+                      x
+                    </RemoveBtn>
+                  </CircleItem>
+                ))}
+              </CircleList>
+            )}
+          </CircleControlsPanel>
+        )}
+
         <ControlGroup>
           <SliderContainer>
             <label>Insert Radius: {circleRadius}px</label>
@@ -85,8 +231,17 @@ const ViewerSection = ({
       </ControlsContainer>
       <ButtonGroup>
         <MainButton onClick={handleCalculate}>
-          Calculate Stopping Power
+          {isEnergyPairViewer
+            ? "Run Energy Pair Analysis"
+            : isTestViewer
+            ? "Run Test Analysis"
+            : "Calculate Stopping Power"}
         </MainButton>
+        {!isTestViewer && !isSECT && onCalibrationSweep && (
+          <SecondaryButton onClick={onCalibrationSweep}>
+            Calibration Sweep
+          </SecondaryButton>
+        )}
       </ButtonGroup>
     </>
   );
@@ -208,4 +363,88 @@ const Select = styled.select`
   color: #ff6bcb;
   background-color: #fff;
   font-size: 16px;
+`;
+
+const CircleControlsPanel = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: #f8f9fc;
+  border-radius: 16px;
+  border: 1px solid #e0e0e0;
+`;
+
+const PlaceButton = styled.button`
+  background: ${(props) => (props.$active ? "#ff4444" : "#00c853")};
+  color: white;
+  padding: 8px 18px;
+  font-size: 14px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0px 4px 10px
+    ${(props) =>
+      props.$active ? "rgba(255,68,68,0.4)" : "rgba(0,200,83,0.4)"};
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+`;
+
+const SmallButton = styled.button`
+  background: #888;
+  color: white;
+  padding: 6px 14px;
+  font-size: 13px;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  opacity: ${(props) => (props.disabled ? 0.5 : 1)};
+  pointer-events: ${(props) => (props.disabled ? "none" : "auto")};
+  transition: background 0.2s;
+
+  &:hover {
+    background: #666;
+  }
+`;
+
+const CircleList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 180px;
+  overflow-y: auto;
+`;
+
+const CircleItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #333;
+  background: ${(props) => (props.$selected ? "#fff3cd" : "#fff")};
+  border: 1px solid ${(props) => (props.$selected ? "#ffeb3b" : "#e0e0e0")};
+  cursor: pointer;
+
+  &:hover {
+    background: ${(props) => (props.$selected ? "#fff3cd" : "#f5f5f5")};
+  }
+`;
+
+const RemoveBtn = styled.button`
+  background: none;
+  border: none;
+  color: #ff4444;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 4px;
+
+  &:hover {
+    color: #cc0000;
+  }
 `;
