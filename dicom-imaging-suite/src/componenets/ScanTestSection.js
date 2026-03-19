@@ -142,7 +142,16 @@ const ScanTestSection = ({ handleScanTestUpload, uploadStatus, handleBack, scanT
         <DebugGrid
           images={debugImages}
           customCircles={customCircles}
-          onCirclesChange={(key, updated) => setCustomCircles(prev => ({ ...(prev || {}), [key]: updated }))}
+          onCirclesChange={(key, updated) =>
+            setCustomCircles(prev => {
+              const next = { ...(prev || {}), [key]: updated };
+              // Mirror high-energy adjustments to the paired low-energy series
+              // (same phantom geometry — user only needs to place circles once per scan pair)
+              if (key === "calH")  next.calL  = updated;
+              if (key === "testH") next.testL = updated;
+              return next;
+            })
+          }
         />
       )}
 
@@ -258,7 +267,7 @@ const DebugGrid = ({ images, customCircles, onCirclesChange }) => {
       <DebugTitle>ROI Placement — Middle Slice per Series</DebugTitle>
       <DebugSubtitle>
         Solid circle = full insert boundary &nbsp;·&nbsp; Dashed inner circle = 70% sampling region
-        &nbsp;·&nbsp; <strong style={{ color: "#ffb347" }}>Drag circles to adjust position</strong>
+        &nbsp;·&nbsp; <strong style={{ color: "#ffb347" }}>Drag circles on H images to adjust — L images sync automatically</strong>
         {hasAdjustments && <span style={{ color: "#2ecc71", marginLeft: 8 }}>✓ Adjusted positions will be used for test</span>}
       </DebugSubtitle>
       <DebugImageGrid>
@@ -288,7 +297,7 @@ const Results = ({ data }) => {
       <ResultsTitle>Hunemohr Results</ResultsTitle>
 
       <MetaRow>
-        <MetaChip label="RMSE" value={rmse !== null ? rmse.toFixed(4) : "—"} highlight />
+        <MetaChip label="RMSE (%)" value={rmse !== null ? `${rmse.toFixed(2)}%` : "—"} highlight />
         <MetaChip label="c"    value={c?.toFixed(4)} />
         <MetaChip label="d_e"  value={d_e?.toFixed(4)} />
         <MetaChip label="Cal slices"  value={cal_slices} />

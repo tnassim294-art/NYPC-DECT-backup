@@ -397,10 +397,19 @@ const PhantomRobustnessSection = ({ handleBack }) => {
       appendSeries(summary.gammex);
       appendSeries(summary.printed);
 
-      // Send the calibration card's adjusted circles (if any) as the global reference
+      // Calibration circles
       const calCircles = customCirclesMap["gammex_Head_H"];
       if (calCircles) {
         formData.append("custom_circles_json", JSON.stringify(calCircles));
+      }
+
+      // Per-size test circles: send all non-calibration adjusted cards
+      const perSize = {};
+      for (const [key, circles] of Object.entries(customCirclesMap)) {
+        if (key !== "gammex_Head_H" && circles) perSize[key] = circles;
+      }
+      if (Object.keys(perSize).length > 0) {
+        formData.append("custom_circles_per_size_json", JSON.stringify(perSize));
       }
 
       setAnalysisMsg(`Uploading and processing ${totalSlices} slices across all sizes — this may take a few minutes…`);
