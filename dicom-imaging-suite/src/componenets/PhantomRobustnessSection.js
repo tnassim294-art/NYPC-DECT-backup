@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
 import { FaFolderOpen, FaArrowLeft, FaCheck, FaTimes } from "react-icons/fa";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, Label, ReferenceLine,
 } from "recharts";
 
@@ -190,27 +190,36 @@ const CustomTooltip = ({ active, payload, label, chartData }) => {
 };
 
 const RobustnessResults = ({ data }) => {
-  const { c, d_e, cal_slices, results_by_size } = data;
+  const {
+    c, d_e, cal_slices,
+    results_by_size,
+    schneider_results_by_size = {},
+    saito_results_by_size = {},
+    tanaka_results_by_size = {},
+  } = data;
+  const hasSchneider = Object.keys(schneider_results_by_size).length > 0;
+  const hasSaito     = Object.keys(saito_results_by_size).length > 0;
+  const hasTanaka    = Object.keys(tanaka_results_by_size).length > 0;
 
   const orderedSizes = SIZE_ORDER.filter(s => results_by_size[s]);
-  // Also include any size not in SIZE_ORDER
   Object.keys(results_by_size).forEach(s => { if (!orderedSizes.includes(s)) orderedSizes.push(s); });
 
-  const chartData = orderedSizes
-    .filter(s => results_by_size[s]?.rmse != null)
-    .map(s => ({
-      size: s,
-      shortSize: s.replace("Head+Ring", "+R").replace("Head+Body", "+Bdy").replace("Head", "Hd"),
-      rmse: parseFloat(results_by_size[s].rmse.toFixed(4)),
-    }));
+  const chartData = orderedSizes.map(s => ({
+    size: s,
+    shortSize: s.replace("Head+Ring", "+R").replace("Head+Body", "+Bdy").replace("Head", "Hd"),
+    hunemohr: results_by_size[s]?.rmse != null ? parseFloat(results_by_size[s].rmse.toFixed(4)) : null,
+    schneider: schneider_results_by_size[s]?.rmse != null ? parseFloat(schneider_results_by_size[s].rmse.toFixed(4)) : null,
+    saito:     saito_results_by_size[s]?.rmse != null     ? parseFloat(saito_results_by_size[s].rmse.toFixed(4))     : null,
+    tanaka:    tanaka_results_by_size[s]?.rmse != null    ? parseFloat(tanaka_results_by_size[s].rmse.toFixed(4))    : null,
+  }));
 
   return (
     <ResultsWrapper>
-      <ResultsTitle>Robustness Results — Hunemohr</ResultsTitle>
+      <ResultsTitle>Robustness Results</ResultsTitle>
       <MetaRow>
-        <MetaChip label="c"          value={c} />
-        <MetaChip label="d_e"        value={d_e} />
-        <MetaChip label="Cal slices" value={cal_slices} />
+        <MetaChip label="Hunemohr c"   value={c} />
+        <MetaChip label="Hunemohr d_e" value={d_e} />
+        <MetaChip label="Cal slices"   value={cal_slices} />
       </MetaRow>
 
       <ChartLabel>RMSE vs Phantom Size</ChartLabel>
@@ -225,15 +234,36 @@ const RobustnessResults = ({ data }) => {
           </YAxis>
           <Tooltip
             contentStyle={{ background: "#1f2a48", border: "1px solid #4a5a80", borderRadius: 8, color: "#e0eafc", fontSize: 12 }}
-            formatter={(v) => [v, "RMSE"]}
+            formatter={(v, name) => [v != null ? `${v}%` : "—", name]}
             labelFormatter={l => chartData.find(d => d.shortSize === l)?.size || l}
           />
+          <Legend wrapperStyle={{ color: "#a0b9e4", fontSize: 12, paddingTop: 8 }} />
           <Line
-            type="monotone" dataKey="rmse" stroke="#ff6bcb" strokeWidth={2.5}
-            dot={{ fill: "#ff6bcb", r: 5, strokeWidth: 0 }}
-            activeDot={{ r: 7 }}
-            name="Hunemohr"
+            type="monotone" dataKey="hunemohr" stroke="#ff6bcb" strokeWidth={2.5}
+            dot={{ fill: "#ff6bcb", r: 5, strokeWidth: 0 }} activeDot={{ r: 7 }}
+            name="Hunemohr (DECT)" connectNulls
           />
+          {hasSchneider && (
+            <Line
+              type="monotone" dataKey="schneider" stroke="#6bbaff" strokeWidth={2.5}
+              dot={{ fill: "#6bbaff", r: 5, strokeWidth: 0 }} activeDot={{ r: 7 }}
+              name="Schneider (SECT)" connectNulls
+            />
+          )}
+          {hasSaito && (
+            <Line
+              type="monotone" dataKey="saito" stroke="#ffb347" strokeWidth={2.5}
+              dot={{ fill: "#ffb347", r: 5, strokeWidth: 0 }} activeDot={{ r: 7 }}
+              name="Saito (DECT)" connectNulls
+            />
+          )}
+          {hasTanaka && (
+            <Line
+              type="monotone" dataKey="tanaka" stroke="#6bffb8" strokeWidth={2.5}
+              dot={{ fill: "#6bffb8", r: 5, strokeWidth: 0 }} activeDot={{ r: 7 }}
+              name="Tanaka (DECT)" connectNulls
+            />
+          )}
         </LineChart>
       </ResponsiveContainer>
 
@@ -241,18 +271,27 @@ const RobustnessResults = ({ data }) => {
         <thead>
           <tr>
             <STh>Size</STh>
-            <STh>RMSE</STh>
+            <STh>Hunemohr RMSE</STh>
+            {hasSchneider && <STh>Schneider RMSE</STh>}
+            {hasSaito     && <STh>Saito RMSE</STh>}
+            {hasTanaka    && <STh>Tanaka RMSE</STh>}
             <STh>Slices</STh>
             <STh>Status</STh>
           </tr>
         </thead>
         <tbody>
           {orderedSizes.map(size => {
-            const r = results_by_size[size];
+            const r  = results_by_size[size];
+            const rs = schneider_results_by_size[size];
+            const rsa = saito_results_by_size[size];
+            const rt  = tanaka_results_by_size[size];
             return (
               <tr key={size}>
                 <STd primary>{size}</STd>
-                <STd>{r?.rmse != null ? r.rmse.toFixed(4) : "—"}</STd>
+                <STd>{r?.rmse   != null ? `${r.rmse.toFixed(2)}%`   : "—"}</STd>
+                {hasSchneider && <STd>{rs?.rmse  != null ? `${rs.rmse.toFixed(2)}%`  : "—"}</STd>}
+                {hasSaito     && <STd>{rsa?.rmse != null ? `${rsa.rmse.toFixed(2)}%` : "—"}</STd>}
+                {hasTanaka    && <STd>{rt?.rmse  != null ? `${rt.rmse.toFixed(2)}%`  : "—"}</STd>}
                 <STd>{r?.n_slices ?? "—"}</STd>
                 <STd>{r?.error
                   ? <ErrText>{r.error}</ErrText>
